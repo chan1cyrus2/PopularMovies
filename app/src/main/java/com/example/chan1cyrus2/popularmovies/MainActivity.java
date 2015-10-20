@@ -11,6 +11,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Make sure that we are not being restored from a previous state,
+        // else we could end up with overlapping fragments.
+        if (savedInstanceState == null) {
+            // Add the fragment to the 'fragment_container' FrameLayout
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, new MainActivityFragment()).commit();
+        }
     }
 
 
