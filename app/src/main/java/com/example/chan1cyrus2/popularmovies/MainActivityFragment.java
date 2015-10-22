@@ -1,8 +1,11 @@
 package com.example.chan1cyrus2.popularmovies;
 
 import android.app.Activity;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,14 +15,24 @@ import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
+    private MovieAdapter mMoviesAdapter;
 
     public MainActivityFragment() {
     }
@@ -30,41 +43,19 @@ public class MainActivityFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        Movie[] data = {
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-                new Movie("http://i.imgur.com/DvpvklR.png"),
-
-        };
-
-
-        List<Movie> dummydata = new ArrayList<>(Arrays.asList(data));
-
-        MovieAdapter moviesAdapter = new MovieAdapter(
-                getActivity(),
-                dummydata
-        );
-
+        //attach gridview with our custom MovieAdapter with empty data, data
+        // will be added onStart by calling FetchMovieInfoTask thread
+        mMoviesAdapter = new MovieAdapter(getActivity(), new ArrayList<Movie>());
         GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
-        gridView.setAdapter(moviesAdapter);
+        gridView.setAdapter(mMoviesAdapter);
 
         return rootView;
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        new FetchMovieInfoTask().execute("popularity.desc");
     }
 
     public class MovieAdapter extends ArrayAdapter<Movie>{
@@ -108,6 +99,147 @@ public class MainActivityFragment extends Fragment {
 
             return imageView;
 
+        }
+    }
+
+    private class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]>{
+        private final String LOG_TAG = FetchMovieInfoTask.class.getSimpleName();
+        @Override
+        protected Movie[] doInBackground(String... params) {
+            //check there is input
+            if (params.length == 0) return null;
+
+            HttpURLConnection urlConnection;
+            InputStream is = null;
+            String moviesJsonStr = null;
+            Movie[] moviesData = null;
+
+
+            try{
+
+                //Build the api request url
+                final String MOVIE_BASE_URL =
+                        "http://api.themoviedb.org/3/discover/movie?";
+                final String APPID_PARAM = "api_key";
+                final String SORT_PARAM = "sort_by";
+
+                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                        .appendQueryParameter(SORT_PARAM, params[0])
+                        .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
+                        .build();
+                URL url = new URL(builtUri.toString());
+                //Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+
+                //Open a connection to the API
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+                is = urlConnection.getInputStream();
+
+                //Convert InputStream into Movie JSON String
+                moviesJsonStr = readInputStream(is);
+
+            }catch (IOException e){
+                Log.e(LOG_TAG, "Error ", e);
+                return null;
+            } finally{
+                if (is!= null){
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+            }
+
+            //now convert JSON String to json then to Movie object
+            try {
+                moviesData = getMovieDataFromJson(moviesJsonStr);
+            }catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }
+            return moviesData;
+        }
+
+        @Override
+        protected void onPostExecute(Movie[] movies) {
+            if(movies!= null){
+                mMoviesAdapter.clear();
+                for(Movie s:movies){
+                    mMoviesAdapter.add(s);
+                }
+            }
+        }
+
+        private String readInputStream(InputStream stream) throws IOException{
+            if (stream == null) return null;
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+            StringBuffer buffer = new StringBuffer();
+            String MoviesJsonStr = null;
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                // But it does make debugging a *lot* easier if you print out the completed
+                // buffer for debugging.
+                buffer.append(line + "\n");
+            }
+            // Stream was empty.  No point in parsing.
+            if (buffer.length() == 0) return null;
+
+            MoviesJsonStr = buffer.toString();
+            //Log.v(LOG_TAG, "Movie JSON String: " + MoviesJsonStr);
+
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException e) {
+                    Log.e(LOG_TAG, "Error closing stream", e);
+                }
+            }
+            return MoviesJsonStr;
+        }
+
+        private Movie[] getMovieDataFromJson (String MovieJsonStr) throws JSONException{
+
+            //JSON objects that needed to extracted
+            final String JSON_RESULTS = "results";
+            final String JSON_TITLE = "original_title";
+            final String JSON_IMGURL = "backdrop_path";
+            final String JSON_PLOT = "overview";
+            final String JSON_RATING = "vote_average";
+            final String JSON_DATE = "release_date";
+
+            //URI construction for imgurl
+            final String IMG_BASE_URL = "http://image.tmdb.org/t/p/";
+            final String IMG_SIZE = "w185";
+
+
+            JSONObject pageJson = new JSONObject(MovieJsonStr);
+            JSONArray movieArray = pageJson.getJSONArray(JSON_RESULTS);
+
+            Movie[] moviesData = new Movie[movieArray.length()];
+            for(int i=0; i < movieArray.length(); i++){
+                JSONObject movie = movieArray.getJSONObject(i);
+
+                String title = movie.getString(JSON_TITLE);
+                String plot = movie.getString(JSON_PLOT);
+                double rating = movie.getDouble(JSON_RATING);
+                String release_date = movie.getString(JSON_DATE);
+
+                //Construct the full imgURL link from relative link
+                Uri builtImgURi = Uri.parse(IMG_BASE_URL).buildUpon()
+                        .appendEncodedPath(IMG_SIZE)
+                        .appendEncodedPath(movie.getString(JSON_IMGURL))
+                        .build();
+                String imgURL = builtImgURi.toString();
+                moviesData[i] = new Movie(title, imgURL, plot, rating, release_date);
+            }
+            for (Movie s : moviesData) {
+                Log.v(LOG_TAG, "Movie entry: " + s.toString());
+            }
+            return moviesData;
         }
     }
 }
