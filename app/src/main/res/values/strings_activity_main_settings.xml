@@ -1,0 +1,11 @@
+<resources>
+    <string name="title_activity_main_settings">MainSettings</string>
+
+    <string name="pref_sort_list_key">sort</string>
+    <string name="pref_sort_list_title">Sort Order</string>
+
+    <string name="pref_sort_label_popularity">Most Popular</string>
+    <string name="pref_sort_label_rating">Highest-rated</string>
+    <string name="pref_sort_popularity">popularity.desc</string>
+    <string name="pref_sort_rating">vote_average.desc</string>
+</resources>

@@ -1,9 +1,11 @@
 package com.example.chan1cyrus2.popularmovies;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -55,7 +57,14 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        new FetchMovieInfoTask().execute("popularity.desc");
+        updateMovieInfo();
+    }
+
+    private void updateMovieInfo(){
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sorting = sharedPref.getString(getString(R.string.pref_sort_list_key),
+                getString(R.string.pref_sort_popularity));
+        new FetchMovieInfoTask().execute(sorting);
     }
 
     public class MovieAdapter extends ArrayAdapter<Movie>{
@@ -122,13 +131,18 @@ public class MainActivityFragment extends Fragment {
                         "http://api.themoviedb.org/3/discover/movie?";
                 final String APPID_PARAM = "api_key";
                 final String SORT_PARAM = "sort_by";
+                final String COUNT_PARAM = "vote_count.gte";
+                //strict to movies with 1000 votes to avoid showing random movies with single
+                //rating of 10 when sort by vote_average
+                final String COUNT_VALUE = "1000";
 
                 Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                         .appendQueryParameter(SORT_PARAM, params[0])
                         .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
+                        .appendQueryParameter(COUNT_PARAM, COUNT_VALUE)
                         .build();
                 URL url = new URL(builtUri.toString());
-                //Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+                //Log.v(LOG_TAG, "pass in " + params[0] +  " Built URI " + builtUri.toString());
 
                 //Open a connection to the API
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -206,7 +220,7 @@ public class MainActivityFragment extends Fragment {
             //JSON objects that needed to extracted
             final String JSON_RESULTS = "results";
             final String JSON_TITLE = "original_title";
-            final String JSON_IMGURL = "backdrop_path";
+            final String JSON_IMGURL = "poster_path";
             final String JSON_PLOT = "overview";
             final String JSON_RATING = "vote_average";
             final String JSON_DATE = "release_date";
@@ -236,9 +250,9 @@ public class MainActivityFragment extends Fragment {
                 String imgURL = builtImgURi.toString();
                 moviesData[i] = new Movie(title, imgURL, plot, rating, release_date);
             }
-            for (Movie s : moviesData) {
+            /*for (Movie s : moviesData) {
                 Log.v(LOG_TAG, "Movie entry: " + s.toString());
-            }
+            }*/
             return moviesData;
         }
     }
