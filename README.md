@@ -1,7 +1,7 @@
 # PopularMovies
 an app to allow users to discover the most popular movies playing
 
-the Moviedb.org API
+#the Moviedb.org API
 Please obtain an API key through https://www.themoviedb.org/
 
 Then replace
