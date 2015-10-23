@@ -1,6 +1,7 @@
 package com.example.chan1cyrus2.popularmovies;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -35,6 +37,7 @@ import java.util.List;
  */
 public class MainActivityFragment extends Fragment {
     private MovieAdapter mMoviesAdapter;
+    public final static String PAR_KEY = "com.example.chan1cyrus2.popularmovies.Movie";
 
     public MainActivityFragment() {
     }
@@ -51,6 +54,18 @@ public class MainActivityFragment extends Fragment {
         GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
         gridView.setAdapter(mMoviesAdapter);
 
+        //Set up click listener when user click on the movie poster
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Movie movieInfo = mMoviesAdapter.getItem(i);
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(PAR_KEY, movieInfo);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtras(bundle);
+                startActivity(intent);
+            }
+        });
         return rootView;
     }
 
@@ -66,6 +81,7 @@ public class MainActivityFragment extends Fragment {
                 getString(R.string.pref_sort_popularity));
         new FetchMovieInfoTask().execute(sorting);
     }
+
 
     public class MovieAdapter extends ArrayAdapter<Movie>{
         /**
