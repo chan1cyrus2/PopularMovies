@@ -1,5 +1,8 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/fragment_container" android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".MainActivity" tools:ignore="MergeRootFrame"/>
+    android:id="@+id/fragment_master"
+    android:name="com.example.chan1cyrus2.popularmovies.MasterFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.chan1cyrus2.popularmovies.MasterFragment"
+    tools:layout="@layout/fragment_master"/>

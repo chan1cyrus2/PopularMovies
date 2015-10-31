@@ -1,7 +1,6 @@
 package com.example.chan1cyrus2.popularmovies;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -32,38 +31,41 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment {
+public class MasterFragment extends Fragment {
+    @Bind(R.id.gridview_movies) GridView gridView;
     private MovieAdapter mMoviesAdapter;
-    public final static String PAR_KEY = "com.example.chan1cyrus2.popularmovies.Movie";
 
-    public MainActivityFragment() {
+
+    //TODO: update mPosition
+
+    public MasterFragment() {
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_master, container, false);
+        ButterKnife.bind(this, rootView);
 
         //attach gridview with our custom MovieAdapter with empty data, data
         // will be added onStart by calling FetchMovieInfoTask thread
         mMoviesAdapter = new MovieAdapter(getActivity(), new ArrayList<Movie>());
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
         gridView.setAdapter(mMoviesAdapter);
 
         //Set up click listener when user click on the movie poster
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                //run the callback function implemented by the activity contained this fragment
                 Movie movieInfo = mMoviesAdapter.getItem(i);
-                Bundle bundle = new Bundle();
-                bundle.putParcelable(PAR_KEY, movieInfo);
-                Intent intent = new Intent(getActivity(), DetailActivity.class)
-                        .putExtras(bundle);
-                startActivity(intent);
+                ((Callback)getActivity()).onItemSelected(movieInfo);
             }
         });
         return rootView;
@@ -82,6 +84,14 @@ public class MainActivityFragment extends Fragment {
         new FetchMovieInfoTask().execute(sorting);
     }
 
+    /**
+     * A callback interface that all activities containing this fragment must implement. This
+     * mechanism allows activities to be notified of item selection.
+     */
+    interface Callback{
+        //When item has been selected on the listView
+        public void onItemSelected(Movie movie);
+    }
 
     public class MovieAdapter extends ArrayAdapter<Movie>{
         /**
@@ -116,7 +126,7 @@ public class MainActivityFragment extends Fragment {
             // and we modify the View widgets as usual.
             if (convertView == null) {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_movies, parent, false);
-            }
+        }
 
             ImageView imageView = (ImageView) convertView.findViewById(R.id.list_item_movies_text_view);
             Picasso.with(getContext()).load(movie.imgURL).into(imageView);

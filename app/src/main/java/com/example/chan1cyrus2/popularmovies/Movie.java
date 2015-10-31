@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class Movie implements Parcelable{
+    public final static String PAR_KEY = "com.example.chan1cyrus2.popularmovies.Movie";
     String title;
     String imgURL;
     String plot;

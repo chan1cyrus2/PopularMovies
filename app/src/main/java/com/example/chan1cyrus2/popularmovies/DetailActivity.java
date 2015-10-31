@@ -17,7 +17,7 @@ public class DetailActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             // Add the fragment to the 'fragment_container' FrameLayout
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container, new DetailActivityFragment()).commit();
+                    .add(R.id.detail_container, new DetailFragment()).commit();
         }
     }
 

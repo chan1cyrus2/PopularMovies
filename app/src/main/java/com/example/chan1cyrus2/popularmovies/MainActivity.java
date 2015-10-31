@@ -1,25 +1,43 @@
 package com.example.chan1cyrus2.popularmovies;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 
-public class MainActivity extends AppCompatActivity {
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+public class MainActivity extends AppCompatActivity implements MasterFragment.Callback{
+    @Nullable @Bind(R.id.detail_container) FrameLayout detail_container;
+
+    private static final String DetailFragmentTag = "DFTAG";
+
+    private boolean mTwoPane; //tablet mode with 600dp width
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        // Make sure that we are not being restored from a previous state,
-        // else we could end up with overlapping fragments.
-        if (savedInstanceState == null) {
-            // Add the fragment to the 'fragment_container' FrameLayout
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container, new MainActivityFragment()).commit();
+        //decide wether it is tablet mode
+        if(null != detail_container){
+            mTwoPane = true;
+            // Make sure that we are not being restored from a previous state,
+            // else we could end up with overlapping fragments.
+            if (savedInstanceState == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.detail_container, new DetailFragment(), DetailFragmentTag)
+                        .commit();
+            }
+        }else{
+            mTwoPane = false;
         }
+
     }
 
 
@@ -44,5 +62,29 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    //MasterFragement.Callback
+    @Override
+    public void onItemSelected(Movie movie) {
+        if(mTwoPane){
+            //send Movie details through Parcel and replace detail fragment with the new details
+            Bundle args = new Bundle();
+            args.putParcelable(Movie.PAR_KEY, movie);
+
+            DetailFragment fragment = new DetailFragment();
+            fragment.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.detail_container, fragment, DetailFragmentTag)
+                    .commit();
+        }else{
+            //Start Detail Activity with Movie details through Parcel
+            Bundle bundle = new Bundle();
+            bundle.putParcelable(Movie.PAR_KEY, movie);
+            Intent intent = new Intent(this, DetailActivity.class)
+                    .putExtras(bundle);
+            startActivity(intent);
+        }
     }
 }
