@@ -34,6 +34,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.chan1cyrus2.popularmovies.MainActivity" />
         </activity>
+        <provider
+            android:authorities="com.example.chan1cyrus2.popularmovies.MovieProvider"
+            android:name="com.example.chan1cyrus2.popularmovies.data.generated.MovieProvider"
+            android:exported="false"/>
     </application>
 
 </manifest>

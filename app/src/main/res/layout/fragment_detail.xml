@@ -23,6 +23,12 @@
             android:gravity="center"
             android:id="@+id/movie_img" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/favorite_button"
+            android:id="@+id/favorite_button" />
+
         <TextView android:id="@+id/movie_plot" android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 

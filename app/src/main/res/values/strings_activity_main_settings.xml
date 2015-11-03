@@ -6,6 +6,8 @@
 
     <string name="pref_sort_label_popularity">Most Popular</string>
     <string name="pref_sort_label_rating">Highest-rated</string>
+    <string name="pref_sort_label_favorite">Favorite</string>
     <string name="pref_sort_popularity">popularity.desc</string>
     <string name="pref_sort_rating">vote_average.desc</string>
+    <string name="pref_sort_favorite">favorite</string>
 </resources>

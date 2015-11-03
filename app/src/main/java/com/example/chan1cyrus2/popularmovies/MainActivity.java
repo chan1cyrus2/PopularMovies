@@ -8,6 +8,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
+import com.facebook.stetho.Stetho;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
@@ -33,9 +35,23 @@ public class MainActivity extends AppCompatActivity implements MasterFragment.Ca
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.detail_container, new DetailFragment(), DetailFragmentTag)
                         .commit();
+                Stetho.initialize(
+                        Stetho.newInitializerBuilder(this)
+                                .enableDumpapp(
+                                        Stetho.defaultDumperPluginsProvider(this))
+                                .enableWebKitInspector(
+                                        Stetho.defaultInspectorModulesProvider(this))
+                                .build());
             }
         }else{
             mTwoPane = false;
+            Stetho.initialize(
+                    Stetho.newInitializerBuilder(this)
+                            .enableDumpapp(
+                                    Stetho.defaultDumperPluginsProvider(this))
+                            .enableWebKitInspector(
+                                    Stetho.defaultInspectorModulesProvider(this))
+                            .build());
         }
 
     }

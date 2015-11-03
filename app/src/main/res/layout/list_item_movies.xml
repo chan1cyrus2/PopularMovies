@@ -5,4 +5,4 @@
     android:adjustViewBounds="true"
     android:minHeight="?android:attr/listPreferredItemHeight"
     android:gravity="center"
-    android:id="@+id/list_item_movies_text_view" />
+    android:id="@+id/list_item_movies_image_view" />
