@@ -1,22 +1,30 @@
 package com.example.chan1cyrus2.popularmovies;
 
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.ListView;
 
-import com.example.chan1cyrus2.popularmovies.data.MovieColumns;
-import com.example.chan1cyrus2.popularmovies.data.MovieProvider;
-import com.squareup.picasso.Picasso;
+import com.example.chan1cyrus2.popularmovies.detailobjects.DetailItem;
+import com.example.chan1cyrus2.popularmovies.detailobjects.Header;
+import com.example.chan1cyrus2.popularmovies.detailobjects.Review;
+import com.example.chan1cyrus2.popularmovies.detailobjects.Trailer;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -25,14 +33,10 @@ import butterknife.ButterKnife;
  * A placeholder fragment containing a simple view.
  */
 public class DetailFragment extends Fragment {
-    @Bind(R.id.movie_title) TextView movieTitle;
-    @Bind(R.id.movie_img) ImageView movieImg;
-    @Bind(R.id.movie_plot) TextView moviePlot;
-    @Bind(R.id.movie_rating) TextView movieRating;
-    @Bind(R.id.movie_date) TextView movieDate;
-    @Bind(R.id.favorite_button) Button favoriteButton;
+    @Bind(R.id.listview_detail) ListView listView;
 
     Movie mMovie;
+    DetailAdapter mDetailAdapter;
 
     public DetailFragment() {
     }
@@ -42,6 +46,8 @@ public class DetailFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         ButterKnife.bind(this, rootView);
+        mDetailAdapter = new DetailAdapter(getActivity(), new ArrayList<DetailItem>());
+        listView.setAdapter(mDetailAdapter);
 
         //Created through Two Panel mode by clicking the list from master Fragment
         // and replacing new fragment with new movie details
@@ -49,12 +55,6 @@ public class DetailFragment extends Fragment {
         if(args != null){
             Movie movie = args.getParcelable(Movie.PAR_KEY);
             mMovie = movie;
-            movieTitle.setText(movie.title);
-            Picasso.with(getContext()).load(movie.imgURL).into(movieImg);
-            moviePlot.setText(movie.plot);
-            movieRating.setText("rating: " + Double.toString(movie.rating));
-            movieDate.setText("release date: " + movie.release_date);
-
         }
 
         //Created through Single Panel mode by clicking the list from master activity
@@ -62,21 +62,15 @@ public class DetailFragment extends Fragment {
         if(intent != null && intent.hasExtra(Movie.PAR_KEY)) {
             Movie movie = intent.getParcelableExtra(Movie.PAR_KEY);
             mMovie = movie;
-            movieTitle.setText(movie.title);
-            Picasso.with(getContext()).load(movie.imgURL).into(movieImg);
-            moviePlot.setText(movie.plot);
-            movieRating.setText("rating: " + Double.toString(movie.rating));
-            movieDate.setText("release date: " + movie.release_date);
         }
 
-        favoriteButton.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View V){
-                SaveFavoriteMovieTask task = new SaveFavoriteMovieTask(getActivity());
-                task.execute(mMovie);
-            }
-        });
-
         return rootView;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        new FetchTrailerReview().execute(mMovie.iD);
     }
 
     @Override
@@ -85,48 +79,224 @@ public class DetailFragment extends Fragment {
         ButterKnife.unbind(this);
     }
 
-    //Task to insert movie data to Database
-    private class SaveFavoriteMovieTask extends AsyncTask<Movie, Void, Void>{
-        private final String LOG_TAG = SaveFavoriteMovieTask.class.getSimpleName();
-        Context mContext;
-        public SaveFavoriteMovieTask(Context context){
-            mContext=context;
-        }
+    //Task to fetch trailer and review
+    private class FetchTrailerReview extends AsyncTask<String, Void, DetailItem[]>{
+        private final String LOG_TAG = FetchTrailerReview.class.getSimpleName();
+
         @Override
-        protected Void doInBackground(Movie... params) {
+        protected DetailItem[] doInBackground(String... params) {
             if (params.length == 0) return null;
 
-            Movie movie = params[0];
+            DetailItem[] items;
+            String movieID = params[0];
+            Trailer[] trailers = fetchTrailer(movieID);
+            Review[] reviews = fetchReview(movieID);
+            int trailer_length; //+1 for header if trailer is not empty
+            int review_length; // +1 for header if review is not empty
 
-            ContentValues cv = new ContentValues();
-            cv.put(MovieColumns.MOVIE_ID, movie.iD);
-            cv.put(MovieColumns.TITLE, movie.title);
-            cv.put(MovieColumns.IMGURL, movie.imgURL);
-            cv.put(MovieColumns.PLOT, movie.plot);
-            cv.put(MovieColumns.RATING, movie.rating);
-            cv.put(MovieColumns.RELEASE_DATE, movie.release_date);
+            if (trailers == null) trailer_length = 0;
+            else trailer_length = trailers.length+1;
+            if (reviews == null) review_length = 0;
+            else review_length = reviews.length+1;
+            //iterate all the DetailItems (trailers, reviews) and return the combined array
+            items = new DetailItem[1 + trailer_length + review_length];
+            items[0] = mMovie;
+            int i = 1;
 
-            Cursor movieCursor = mContext.getContentResolver().query(
-                    MovieProvider.Movies.withId(movie.iD),
-                    new String[]{MovieColumns.MOVIE_ID},
-                    null,
-                    null,
-                    null
-            );
-
-            if(movieCursor.moveToFirst()) {
-                mContext.getContentResolver().update(
-                        MovieProvider.Movies.withId(movie.iD), cv, null, null);
-            }else{
-                mContext.getContentResolver().insert(
-                        MovieProvider.Movies.CONTENT_URI, cv);
+            if(trailer_length != 0) {
+                items[1] = new Header("Trailers:");
+                i++;
+                for (int j = 0; j < trailer_length - 1; j++) {
+                    if (i > items.length) break;
+                    items[i] = trailers[j];
+                    i++;
+                }
             }
-            return null;
+
+            if(review_length != 0) {
+                items[i] = new Header("Reviews:");
+                i++;
+                for (int j = 0; j < review_length - 1; j++) {
+                    if (i >= items.length) break;
+                    items[i] = reviews[j];
+                    i++;
+                }
+            }
+            return items;
+        }
+
+        @Override
+        protected void onPostExecute(DetailItem[] detailItems) {
+            if(detailItems!= null){
+                ((DetailAdapter)mDetailAdapter).clear();
+                for(DetailItem s:detailItems){
+                    ((DetailAdapter)mDetailAdapter).add(s);
+                }
+            }
+        }
+
+        private Trailer[] fetchTrailer(String movieID){
+            HttpURLConnection urlConnection = null;
+            InputStream is = null;
+            String jsonStr = null;
+            Trailer[] trailers = null;
+
+            try{
+
+                //Build the api request url
+                final String MOVIE_BASE_URL =
+                        "http://api.themoviedb.org/3/movie/";
+                final String APPID_PARAM = "api_key";
+                final String VIDEO_PATH = "videos";
+
+                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                        .appendPath(movieID)
+                        .appendPath(VIDEO_PATH)
+                        .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
+                        .build();
+                URL url = new URL(builtUri.toString());
+                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+
+                //Open a connection to the API
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+                is = urlConnection.getInputStream();
+
+                //Convert InputStream into Movie JSON String
+                jsonStr = Utility.readInputStream(is);
+                //Log.v(LOG_TAG, "Trailer JSON: " + jsonStr.toString());
+
+            }catch (IOException e){
+                Log.e(LOG_TAG, "Error ", e);
+                return null;
+            } finally{
+                if (is!= null){
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+                if(urlConnection != null){
+                    urlConnection.disconnect();
+                }
+            }
+
+            //now convert JSON String to json then to object
+            try {
+                trailers = getTrailerFromJson(jsonStr);
+            }catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }
+            return trailers;
+        }
+
+        private Trailer[] getTrailerFromJson(String jsonStr) throws JSONException{
+            //JSON objects that needed to extract
+            final String JSON_RESULT = "results";
+            final String JSON_KEY = "key";
+
+            //URI construction for youtubeurl
+            //final String YOUTUBE_BASE_URL = "https://www.youtube.com/watch?";
+            //final String VIDEO_PARAM = "v";
+
+            JSONObject mainJson = new JSONObject(jsonStr);
+            JSONArray trailerArray = mainJson.getJSONArray(JSON_RESULT);
+
+            Trailer[] trailers = new Trailer[trailerArray.length()];
+            for(int i = 0; i <trailerArray.length(); i++){
+                JSONObject trailer = trailerArray.getJSONObject(i);
+                String key = trailer.getString(JSON_KEY);
+
+                //Uri builtUri = Uri.parse(YOUTUBE_BASE_URL).buildUpon()
+                        //.appendQueryParameter(VIDEO_PARAM, key)
+                        //.build();
+                trailers[i] = new Trailer(key, "Trailer " + Integer.toString(i+1));
+                //Log.v(LOG_TAG, trailers[i].url);
+            }
+
+            return trailers;
+        }
+
+        private Review[] fetchReview(String movieID){
+            HttpURLConnection urlConnection = null;
+            InputStream is = null;
+            String jsonStr = null;
+            Review[] reviews = null;
+
+            try{
+
+                //Build the api request url
+                final String MOVIE_BASE_URL =
+                        "http://api.themoviedb.org/3/movie/";
+                final String APPID_PARAM = "api_key";
+                final String REVIEW_PATH = "reviews";
+
+                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                        .appendPath(movieID)
+                        .appendPath(REVIEW_PATH)
+                        .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
+                        .build();
+                URL url = new URL(builtUri.toString());
+                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+
+                //Open a connection to the API
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+                is = urlConnection.getInputStream();
+
+                //Convert InputStream into Movie JSON String
+                jsonStr = Utility.readInputStream(is);
+                //Log.v(LOG_TAG, "Trailer JSON: " + jsonStr.toString());
+
+            }catch (IOException e){
+                Log.e(LOG_TAG, "Error ", e);
+                return null;
+            } finally{
+                if (is!= null){
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        Log.e(LOG_TAG, "Error closing stream", e);
+                    }
+                }
+                if(urlConnection != null){
+                    urlConnection.disconnect();
+                }
+            }
+
+            //now convert JSON String to json then to object
+            try {
+                reviews = getReviewFromJson(jsonStr);
+            }catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }
+            return reviews;
+        }
+
+        private Review[] getReviewFromJson(String jsonStr) throws JSONException{
+            //JSON objects that needed to extract
+            final String JSON_RESULT = "results";
+            final String JSON_CONTENT = "content";
+            final String JSON_AUTHOR = "author";
+
+            JSONObject mainJson = new JSONObject(jsonStr);
+            JSONArray reviewArray = mainJson.getJSONArray(JSON_RESULT);
+
+            Review[] reviews = new Review[reviewArray.length()];
+            for(int i = 0; i <reviewArray.length(); i++){
+                JSONObject trailer = reviewArray.getJSONObject(i);
+                String content = trailer.getString(JSON_CONTENT);
+                String author = trailer.getString(JSON_AUTHOR);
+                reviews[i] = new Review(content, author);
+
+                //Log.v(LOG_TAG, reviews[i].author);
+            }
+
+            return reviews;
         }
     }
 
-    //Task to fetch trailer
-    //private class FetchTrailer extends AsyncTask<String, Void, String[]>{
-
-    //}
 }

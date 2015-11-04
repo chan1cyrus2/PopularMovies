@@ -3,8 +3,12 @@ package com.example.chan1cyrus2.popularmovies;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class Movie implements Parcelable{
+import com.example.chan1cyrus2.popularmovies.detailobjects.DetailItem;
+
+public class Movie implements Parcelable, DetailItem {
     public final static String PAR_KEY = "com.example.chan1cyrus2.popularmovies.Movie";
+    public final static int VIEWTYPE = 0;
+
     String iD;
     String title;
     String imgURL;
@@ -66,4 +70,10 @@ public class Movie implements Parcelable{
             return new Movie[size];
         }
     };
+
+    //For Detail Item interface
+    @Override
+    public int getViewType() {
+        return VIEWTYPE;
+    }
 }

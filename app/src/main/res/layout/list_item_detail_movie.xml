@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Display2"
+        tools:text="Movie Title"
+        android:id="@+id/movie_title"
+        android:gravity="center_horizontal"
+        android:paddingBottom="8dp" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp">
+
+        <ImageView
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/movie_img"
+            android:scaleType="fitXY"
+            android:adjustViewBounds="true"
+            tools:src="@drawable/error"/>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:paddingLeft="12dp"
+            android:paddingTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Title"
+                tools:text="2015/7/3"
+                android:id="@+id/movie_date"
+                android:paddingBottom="3dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="3dp"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Caption"
+                tools:text="8.1/10"
+                android:id="@+id/movie_rating" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="3dp"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Favorite"
+                android:id="@+id/favorite_button" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Body1"
+        tools:text="This is the movie Plot. This is the movie Plot. This is the movie Plot. This is the movie Plot. This is the movie Plot. This is the movie Plot."
+        android:id="@+id/movie_plot" />
+
+</LinearLayout>

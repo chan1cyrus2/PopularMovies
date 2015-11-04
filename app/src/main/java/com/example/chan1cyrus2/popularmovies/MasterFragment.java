@@ -25,10 +25,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -136,6 +134,12 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
         super.onActivityCreated(savedInstanceState);
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        ButterKnife.unbind(this);
+    }
+
     //LoaderCallbacks
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -182,7 +186,7 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
             //check there is input
             if (params.length == 0) return null;
 
-            HttpURLConnection urlConnection;
+            HttpURLConnection urlConnection = null;
             InputStream is = null;
             String moviesJsonStr = null;
             Movie[] moviesData = null;
@@ -215,7 +219,7 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
                 is = urlConnection.getInputStream();
 
                 //Convert InputStream into Movie JSON String
-                moviesJsonStr = readInputStream(is);
+                moviesJsonStr = Utility.readInputStream(is);
                 //Log.v(LOG_TAG, "Movie JSON: " + moviesJsonStr.toString());
 
             }catch (IOException e){
@@ -228,6 +232,9 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
                     } catch (IOException e) {
                         Log.e(LOG_TAG, "Error closing stream", e);
                     }
+                }
+                if(urlConnection != null){
+                    urlConnection.disconnect();
                 }
             }
 
@@ -248,36 +255,6 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
                     ((MovieArrayAdapter)mMoviesArrayAdapter).add(s);
                 }
             }
-        }
-
-        private String readInputStream(InputStream stream) throws IOException{
-            if (stream == null) return null;
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            StringBuffer buffer = new StringBuffer();
-            String MoviesJsonStr = null;
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                // But it does make debugging a *lot* easier if you print out the completed
-                // buffer for debugging.
-                buffer.append(line + "\n");
-            }
-            // Stream was empty.  No point in parsing.
-            if (buffer.length() == 0) return null;
-
-            MoviesJsonStr = buffer.toString();
-            //Log.v(LOG_TAG, "Movie JSON String: " + MoviesJsonStr);
-
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (final IOException e) {
-                    Log.e(LOG_TAG, "Error closing stream", e);
-                }
-            }
-            return MoviesJsonStr;
         }
 
         private Movie[] getMovieDataFromJson (String MovieJsonStr) throws JSONException{
