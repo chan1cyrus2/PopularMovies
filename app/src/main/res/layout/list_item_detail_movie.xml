@@ -7,16 +7,19 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Display2"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Display1"
         tools:text="Movie Title"
         android:id="@+id/movie_title"
         android:gravity="center_horizontal"
-        android:paddingBottom="8dp" />
+        android:paddingBottom="8dp"
+        android:background="@color/green"/>
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="12dp"
+        android:paddingLeft="12dp"
         android:paddingBottom="12dp">
 
         <ImageView
@@ -53,10 +56,12 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="3dp"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textAppearance="?android:attr/textAppearanceSmall"
                 android:text="Favorite"
-                android:id="@+id/favorite_button" />
+                android:background="@drawable/favorite_button"
+                android:id="@+id/favorite_button"
+                />
+            <!--android:background="@drawable/favorite_button"-->
         </LinearLayout>
 
     </LinearLayout>
@@ -65,6 +70,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="@style/Base.TextAppearance.AppCompat.Body1"
+        android:paddingLeft="12dp"
         tools:text="This is the movie Plot. This is the movie Plot. This is the movie Plot. This is the movie Plot. This is the movie Plot. This is the movie Plot."
         android:id="@+id/movie_plot" />
 

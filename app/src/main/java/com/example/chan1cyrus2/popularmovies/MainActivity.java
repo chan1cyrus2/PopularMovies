@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity implements MasterFragment.Ca
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        //decide wether it is tablet mode
+        //decide whether it is tablet mode
         if(null != detail_container){
             mTwoPane = true;
             // Make sure that we are not being restored from a previous state,
@@ -35,25 +35,18 @@ public class MainActivity extends AppCompatActivity implements MasterFragment.Ca
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.detail_container, new DetailFragment(), DetailFragmentTag)
                         .commit();
-                Stetho.initialize(
-                        Stetho.newInitializerBuilder(this)
-                                .enableDumpapp(
-                                        Stetho.defaultDumperPluginsProvider(this))
-                                .enableWebKitInspector(
-                                        Stetho.defaultInspectorModulesProvider(this))
-                                .build());
             }
         }else{
             mTwoPane = false;
-            Stetho.initialize(
-                    Stetho.newInitializerBuilder(this)
-                            .enableDumpapp(
-                                    Stetho.defaultDumperPluginsProvider(this))
-                            .enableWebKitInspector(
-                                    Stetho.defaultInspectorModulesProvider(this))
-                            .build());
         }
-
+        // Initialize Stetho
+        Stetho.initialize(
+                Stetho.newInitializerBuilder(this)
+                        .enableDumpapp(
+                                Stetho.defaultDumperPluginsProvider(this))
+                        .enableWebKitInspector(
+                                Stetho.defaultInspectorModulesProvider(this))
+                        .build());
     }
 
 
@@ -101,6 +94,22 @@ public class MainActivity extends AppCompatActivity implements MasterFragment.Ca
             Intent intent = new Intent(this, DetailActivity.class)
                     .putExtras(bundle);
             startActivity(intent);
+        }
+    }
+
+    @Override
+    public void startFirstMovieDetail(Movie movie) {
+        if(mTwoPane){
+            //send Movie details through Parcel and replace detail fragment with the new details
+            Bundle args = new Bundle();
+            args.putParcelable(Movie.PAR_KEY, movie);
+
+            DetailFragment fragment = new DetailFragment();
+            fragment.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.detail_container, fragment, DetailFragmentTag)
+                    .commit();
         }
     }
 }

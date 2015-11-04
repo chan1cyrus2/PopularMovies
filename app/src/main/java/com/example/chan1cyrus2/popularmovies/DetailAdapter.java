@@ -87,7 +87,8 @@ public class DetailAdapter extends ArrayAdapter<DetailItem>{
                         .into(holder.trailer_img);
                 convertView.setOnClickListener(new View.OnClickListener() {
                         public void onClick(View V) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube://" + trailer.url));
+                        //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube://" + trailer.url));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + trailer.url));
                         getContext().startActivity(intent);
                         }
                 });

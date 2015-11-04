@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.GridView;
+import android.widget.ListView;
 
 import com.example.chan1cyrus2.popularmovies.data.MovieColumns;
 import com.example.chan1cyrus2.popularmovies.data.MovieProvider;
@@ -30,6 +31,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -42,12 +44,14 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
 
     private final String LOG_TAG = MasterFragment.class.getSimpleName();
     public static final int MOVIE_FAV_LOADER = 0;
+    private static final String SELECTED_KEY = "selected_position";
 
     private MovieArrayAdapter mMoviesArrayAdapter; //fetch data from API
     private MovieCursorAdapter mMoviesCursorAdapter; //fetch data from database
     private boolean mFavorite;
+    private int mPosition = GridView.INVALID_POSITION;
 
-    //TODO: update mPosition
+
 
     public MasterFragment() {
     }
@@ -64,6 +68,17 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
                 getString(R.string.pref_sort_popularity));
         mMoviesCursorAdapter = new MovieCursorAdapter(getActivity(), null, 0);
         mMoviesArrayAdapter = new MovieArrayAdapter(getActivity(), new ArrayList<Movie>());
+
+        if(savedInstanceState!=null){
+            ArrayList<Movie> listOfMovies = (ArrayList<Movie>)(List<Movie>)savedInstanceState.get(Movie.PAR_KEY);
+            mMoviesArrayAdapter.clear();
+            for(Movie s:listOfMovies){
+                mMoviesArrayAdapter.add(s);
+            }
+            if(savedInstanceState.containsKey(SELECTED_KEY)){
+                mPosition = savedInstanceState.getInt(SELECTED_KEY);
+            }
+        }
         //Decide how we fetch data, from databasae if sorting is favorite
         // or from API request for others
         if (sorting.equals(getString(R.string.pref_sort_favorite))){
@@ -95,6 +110,7 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
                             cursorItem.getString(cursorItem.getColumnIndex(MovieColumns.RELEASE_DATE)));
                 }
                 ((Callback)getActivity()).onItemSelected(movie);
+                mPosition = i;
             }
         });
         return rootView;
@@ -120,7 +136,6 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
             }
             mFavorite = false;
             updateMovieInfo();
-
         }
     }
 
@@ -132,6 +147,21 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
             getLoaderManager().initLoader(MOVIE_FAV_LOADER, null, this);
         }
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if(mMoviesArrayAdapter!= null){
+            ArrayList<Movie> listOfMovies = new ArrayList<Movie>();
+            for (int i = 0; i < mMoviesArrayAdapter.getCount(); i++)
+                listOfMovies.add(mMoviesArrayAdapter.getItem(i));
+            outState.putParcelableArrayList(Movie.PAR_KEY, (ArrayList<Movie>) listOfMovies);
+        }
+        if(mPosition != ListView.INVALID_POSITION){
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
+
     }
 
     @Override
@@ -166,7 +196,6 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sorting = sharedPref.getString(getString(R.string.pref_sort_list_key),
                 getString(R.string.pref_sort_popularity));
-        //if it is on favorite setting, check database, else go api to get the rest
         new FetchMovieInfoTask().execute(sorting);
     }
 
@@ -177,6 +206,7 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
     interface Callback{
         //When item has been selected on the listView
         public void onItemSelected(Movie movie);
+        public void startFirstMovieDetail(Movie movie);
     }
 
     private class FetchMovieInfoTask extends AsyncTask<String, Void, Movie[]>{
@@ -254,6 +284,10 @@ public class MasterFragment extends Fragment implements LoaderManager.LoaderCall
                 for(Movie s:movies){
                     ((MovieArrayAdapter)mMoviesArrayAdapter).add(s);
                 }
+            }
+            //Set the detail view to the first movie if no movie is selected yet
+            if(mPosition == GridView.INVALID_POSITION){
+                ((Callback)getActivity()).startFirstMovieDetail(movies[0]);
             }
         }
 

@@ -21,7 +21,8 @@
         <activity
             android:name=".MainSettingsActivity"
             android:label="@string/title_activity_main_settings"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/SettingsTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.chan1cyrus2.popularmovies.MainActivity" />

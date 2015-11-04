@@ -5,8 +5,13 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -37,8 +42,11 @@ public class DetailFragment extends Fragment {
 
     Movie mMovie;
     DetailAdapter mDetailAdapter;
+    private ShareActionProvider mShareActionProvider;
+    private String mShareTrailer;
 
     public DetailFragment() {
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -51,17 +59,21 @@ public class DetailFragment extends Fragment {
 
         //Created through Two Panel mode by clicking the list from master Fragment
         // and replacing new fragment with new movie details
-        Bundle args = getArguments();
-        if(args != null){
-            Movie movie = args.getParcelable(Movie.PAR_KEY);
-            mMovie = movie;
-        }
+        if(savedInstanceState == null) {
+            Bundle args = getArguments();
+            if (args != null) {
+                Movie movie = args.getParcelable(Movie.PAR_KEY);
+                mMovie = movie;
+            }
 
-        //Created through Single Panel mode by clicking the list from master activity
-        Intent intent = getActivity().getIntent();
-        if(intent != null && intent.hasExtra(Movie.PAR_KEY)) {
-            Movie movie = intent.getParcelableExtra(Movie.PAR_KEY);
-            mMovie = movie;
+            //Created through Single Panel mode by clicking the list from master activity
+            Intent intent = getActivity().getIntent();
+            if (intent != null && intent.hasExtra(Movie.PAR_KEY)) {
+                Movie movie = intent.getParcelableExtra(Movie.PAR_KEY);
+                mMovie = movie;
+            }
+        }else{
+            mMovie = savedInstanceState.getParcelable(Movie.PAR_KEY);
         }
 
         return rootView;
@@ -70,7 +82,36 @@ public class DetailFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        new FetchTrailerReview().execute(mMovie.iD);
+        if(mMovie!= null) {
+            new FetchTrailerReview().execute(mMovie.iD);
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_detailfragment, menu);
+        MenuItem item = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+
+        if (mShareTrailer != null) {
+            mShareActionProvider.setShareIntent(createShareTrailerIntent());
+        }
+    }
+
+    private Intent createShareTrailerIntent() {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT,
+                Uri.parse("https://www.youtube.com/watch?").buildUpon()
+                .appendQueryParameter("v", mShareTrailer).build().toString());
+        return shareIntent;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(Movie.PAR_KEY, mMovie);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -104,6 +145,8 @@ public class DetailFragment extends Fragment {
             int i = 1;
 
             if(trailer_length != 0) {
+                //update first trailer for share
+                mShareTrailer = trailers[0].url;
                 items[1] = new Header("Trailers:");
                 i++;
                 for (int j = 0; j < trailer_length - 1; j++) {
@@ -131,6 +174,9 @@ public class DetailFragment extends Fragment {
                 ((DetailAdapter)mDetailAdapter).clear();
                 for(DetailItem s:detailItems){
                     ((DetailAdapter)mDetailAdapter).add(s);
+                }
+                if (mShareActionProvider != null) {
+                    mShareActionProvider.setShareIntent(createShareTrailerIntent());
                 }
             }
         }

@@ -1,27 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:orientation="vertical" android:layout_width="match_parent"
+android:layout_height="wrap_content"
+android:paddingBottom="8dp"
+android:paddingTop="8dp">
 
 <ImageView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:src="@android:drawable/divider_horizontal_bright"
-    android:layout_width="fill_parent"
-    android:layout_height="5dp"
-    android:scaleType="fitXY"
-    android:paddingLeft="5dp"
-    android:paddingRight="5dp"
-    android:paddingBottom="2dp"
-    android:paddingTop="2dp" />
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:src="@android:drawable/divider_horizontal_bright"
+android:layout_width="fill_parent"
+android:layout_height="5dp"
+android:scaleType="fitXY"
+android:paddingLeft="5dp"
+android:paddingRight="5dp"
+android:paddingBottom="2dp"
+android:paddingTop="2dp" /> -->
 
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:textAppearance="@style/Base.TextAppearance.AppCompat.Subhead"
-    android:paddingBottom="10dp"
+    android:textAppearance="@style/Base.TextAppearance.AppCompat.Title"
     android:id="@+id/detail_header"
-    tools:text="Heading"/>
-
-</LinearLayout>
+    android:background="@color/lighter_green"
+    android:gravity="center_horizontal"
+    tools:text="Heading"
+    android:paddingBottom="6dp"
+    android:paddingTop="6dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp">
+</TextView>

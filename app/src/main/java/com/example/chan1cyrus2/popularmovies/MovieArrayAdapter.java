@@ -57,7 +57,9 @@ public class MovieArrayAdapter extends ArrayAdapter<Movie> {
             holder = (ViewHolder)convertView.getTag();
         }
 
-        Picasso.with(getContext()).load(movie.imgURL).into(holder.imageView);
+        Picasso.with(getContext()).load(movie.imgURL)
+                .error(R.drawable.error)
+                .into(holder.imageView);
         //imageView.setImageResource(movie.imgURL);
 
         return convertView;
