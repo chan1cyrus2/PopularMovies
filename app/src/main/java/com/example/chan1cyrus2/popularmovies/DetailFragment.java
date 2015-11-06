@@ -195,23 +195,27 @@ public class DetailFragment extends Fragment {
                 final String APPID_PARAM = "api_key";
                 final String VIDEO_PATH = "videos";
 
-                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
-                        .appendPath(movieID)
-                        .appendPath(VIDEO_PATH)
-                        .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
-                        .build();
-                URL url = new URL(builtUri.toString());
-                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+                if (isAdded()){
+                    Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                            .appendPath(movieID)
+                            .appendPath(VIDEO_PATH)
+                            .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
+                            .build();
+                    URL url = new URL(builtUri.toString());
+                    Log.v(LOG_TAG, "Built URI " + builtUri.toString());
 
-                //Open a connection to the API
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                is = urlConnection.getInputStream();
+                    //Open a connection to the API
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.connect();
+                    is = urlConnection.getInputStream();
 
-                //Convert InputStream into Movie JSON String
-                jsonStr = Utility.readInputStream(is);
-                //Log.v(LOG_TAG, "Trailer JSON: " + jsonStr.toString());
+                    //Convert InputStream into Movie JSON String
+                    jsonStr = Utility.readInputStream(is);
+                    //Log.v(LOG_TAG, "Trailer JSON: " + jsonStr.toString());
+                }else{
+                    return null;
+                }
 
             }catch (IOException e){
                 Log.e(LOG_TAG, "Error ", e);
@@ -279,23 +283,27 @@ public class DetailFragment extends Fragment {
                 final String APPID_PARAM = "api_key";
                 final String REVIEW_PATH = "reviews";
 
-                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
-                        .appendPath(movieID)
-                        .appendPath(REVIEW_PATH)
-                        .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
-                        .build();
-                URL url = new URL(builtUri.toString());
-                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+                if (isAdded()) {
+                    Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                            .appendPath(movieID)
+                            .appendPath(REVIEW_PATH)
+                            .appendQueryParameter(APPID_PARAM, getString(R.string.movie_api_key))
+                            .build();
+                    URL url = new URL(builtUri.toString());
+                    Log.v(LOG_TAG, "Built URI " + builtUri.toString());
 
-                //Open a connection to the API
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                is = urlConnection.getInputStream();
+                    //Open a connection to the API
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.connect();
+                    is = urlConnection.getInputStream();
 
-                //Convert InputStream into Movie JSON String
-                jsonStr = Utility.readInputStream(is);
-                //Log.v(LOG_TAG, "Trailer JSON: " + jsonStr.toString());
+                    //Convert InputStream into Movie JSON String
+                    jsonStr = Utility.readInputStream(is);
+                    //Log.v(LOG_TAG, "Trailer JSON: " + jsonStr.toString());
+                }else{
+                    return null;
+                }
 
             }catch (IOException e){
                 Log.e(LOG_TAG, "Error ", e);
